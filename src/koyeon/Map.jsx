@@ -1,5 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {hasCoordinate,routeCoordinates} from './data.js';
+import {CAMPUS_BOUNDS,MIN_ZOOM} from './mapPolicy.js';
 import {loadNaverMaps,fitNaverBounds} from './naver.js';
 function clearOverlays(overlays) {
     overlays.current.forEach(item=>{window.naver?.maps?.Event.clearInstanceListeners(item);item.setMap(null);});
@@ -24,7 +25,8 @@ export default function Map({pubs,selected,onSelect,mapRef,route,location}) {
         loadNaverMaps().then(maps=>{
             if(cancelled)return;
             const map=new maps.Map(host.current,{
-                center:new maps.LatLng(37.5855,127.0295),zoom:17,minZoom:11,maxZoom:21,
+                center:new maps.LatLng(37.5855,127.0295),zoom:17,minZoom:MIN_ZOOM,maxZoom:21,
+                maxBounds:new maps.LatLngBounds(new maps.LatLng(CAMPUS_BOUNDS.south,CAMPUS_BOUNDS.west),new maps.LatLng(CAMPUS_BOUNDS.north,CAMPUS_BOUNDS.east)),
                 zoomControl:false,mapTypeControl:false,scaleControl:true,logoControl:true,mapDataControl:true,
                 logoControlOptions:{position:maps.Position.BOTTOM_LEFT},scaleControlOptions:{position:maps.Position.BOTTOM_LEFT},
             });
