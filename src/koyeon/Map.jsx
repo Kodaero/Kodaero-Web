@@ -17,7 +17,7 @@ export default function Map({pubs,selected,onSelect,mapRef,route,location}) {
     pubs.filter(hasCoordinate).forEach(pub=>{
       const active=pub.id===selected?.id;
       const html=document.createElement('div'); html.className=`pub-pin ${active?'active':''}`;
-      const image=document.createElement('img');image.src='/assets/icon-FREE_BAR-marker.png';image.alt='';html.append(image);
+      const image=document.createElement('img');image.src=`${import.meta.env.BASE_URL}assets/icon-FREE_BAR-marker.png`;image.alt='';html.append(image);
       const label=document.createElement('span'); label.textContent=pub.name; html.append(label);
       const marker=L.marker([pub.latitude,pub.longitude],{icon:L.divIcon({html,className:'pin-container',iconSize:[42,48],iconAnchor:[21,48]}),opacity:route?.path ? (active?1:.4) : 1,zIndexOffset:active?1000:0,title:pub.name,alt:`${pub.name} 주점 선택`}).addTo(markers.current);
       marker.on('click',()=>onSelect(pub));
