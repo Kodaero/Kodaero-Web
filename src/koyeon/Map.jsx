@@ -1,39 +1,88 @@
-import React,{useEffect,useRef} from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React,{useEffect,useRef,useState} from 'react';
 import {hasCoordinate,routeCoordinates} from './data.js';
+import {loadNaverMaps,fitNaverBounds} from './naver.js';
+function clearOverlays(overlays) {
+    overlays.current.forEach(item=>{window.naver?.maps?.Event.clearInstanceListeners(item);item.setMap(null);});
+    overlays.current=[];
+}
+function markerContent(pub,active,onSelect) {
+    const button=document.createElement('button');
+    button.type='button';button.className=`pub-pin ${active?'active':''}`;
+    button.setAttribute('aria-label',`${pub.name} 주점 선택`);
+    const image=document.createElement('img');image.src=`${import.meta.env.BASE_URL}assets/icon-FREE_BAR-marker.png`;image.alt='';button.append(image);
+    const label=document.createElement('span');label.textContent=pub.name;button.append(label);
+    button.addEventListener('click',event=>{event.stopPropagation();onSelect(pub);});
+    return button;
+}
 export default function Map({pubs,selected,onSelect,mapRef,route,location}) {
-  const host=useRef(), markers=useRef(), path=useRef(), user=useRef();
-  useEffect(()=>{
-    const map=L.map(host.current,{zoomControl:false,center:[37.5851,127.0298],zoom:17,minZoom:11,maxZoom:19});
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>'}).addTo(map);
-    mapRef.current=map; markers.current=L.layerGroup().addTo(map); path.current=L.layerGroup().addTo(map); user.current=L.layerGroup().addTo(map);
-    const observer=new ResizeObserver(()=>map.invalidateSize()); observer.observe(host.current);
-    return ()=>{observer.disconnect();map.remove();mapRef.current=null;};
-  },[]);
-  useEffect(()=>{
-    if(!markers.current)return;
-    markers.current.clearLayers();
-    pubs.filter(hasCoordinate).forEach(pub=>{
-      const active=pub.id===selected?.id;
-      const html=document.createElement('div'); html.className=`pub-pin ${active?'active':''}`;
-      const image=document.createElement('img');image.src=`${import.meta.env.BASE_URL}assets/icon-FREE_BAR-marker.png`;image.alt='';html.append(image);
-      const label=document.createElement('span'); label.textContent=pub.name; html.append(label);
-      const marker=L.marker([pub.latitude,pub.longitude],{icon:L.divIcon({html,className:'pin-container',iconSize:[42,48],iconAnchor:[21,48]}),opacity:route?.path ? (active?1:.4) : 1,zIndexOffset:active?1000:0,title:pub.name,alt:`${pub.name} 주점 선택`}).addTo(markers.current);
-      marker.on('click',()=>onSelect(pub));
-    });
-  },[pubs,selected?.id,onSelect,route]);
-  useEffect(()=>{
-    if(!path.current)return;path.current.clearLayers();
-    const points=routeCoordinates(route);
-    points.forEach(segment=>{L.polyline(segment,{color:'white',weight:9}).addTo(path.current);L.polyline(segment,{color:'#F85C5C',weight:5}).addTo(path.current);});
-    if(points.length){
-      const all=points.flat();
-      [all[0],all.at(-1)].forEach((point,index)=>L.circleMarker(point,{radius:7,color:'white',weight:3,fillColor:index===0?'#4d4d4d':'#F85C5C',fillOpacity:1}).bindTooltip(index===0?'출발':'도착',{permanent:true,direction:'right'}).addTo(path.current));
-      const mobile=window.matchMedia('(max-width:760px)').matches;
-      mapRef.current.fitBounds(L.latLngBounds(all),{paddingTopLeft:mobile?[30,230]:[60,90],paddingBottomRight:mobile?[65,30]:[60,90],maxZoom:18});
-    }
-  },[route]);
-  useEffect(()=>{if(!user.current)return;user.current.clearLayers();if(location)L.circleMarker([location.latitude,location.longitude],{radius:8,color:'white',weight:3,fillColor:'#4285F4',fillOpacity:1}).addTo(user.current);},[location]);
-  return <div className="map" ref={host} role="region" aria-label="고연전 무료주점 지도"/>;
+    const host=useRef(),nativeMap=useRef(),markers=useRef([]),path=useRef([]),user=useRef([]);
+    const [ready,setReady]=useState(false),[error,setError]=useState('');
+    useEffect(()=>{
+        let cancelled=false,observer;
+        const authError=event=>{setReady(false);nativeMap.current=null;mapRef.current=null;markers.current=[];path.current=[];user.current=[];setError(event.detail);};
+        window.addEventListener('kodaero:naver-map-error',authError);
+        loadNaverMaps().then(maps=>{
+            if(cancelled)return;
+            const map=new maps.Map(host.current,{
+                center:new maps.LatLng(37.5855,127.0295),zoom:17,minZoom:11,maxZoom:21,
+                zoomControl:false,mapTypeControl:false,scaleControl:true,logoControl:true,mapDataControl:true,
+                logoControlOptions:{position:maps.Position.BOTTOM_LEFT},scaleControlOptions:{position:maps.Position.BOTTOM_LEFT},
+            });
+            nativeMap.current=map;
+            mapRef.current={
+                focus:([lat,lng],zoom=18)=>{map.setZoom(zoom);map.panTo(new maps.LatLng(lat,lng));},
+                zoomIn:()=>map.setZoom(map.getZoom()+1,true),
+                zoomOut:()=>map.setZoom(map.getZoom()-1,true),
+                fitBounds:(points,options)=>fitNaverBounds(map,maps,points,options),
+            };
+            observer=new ResizeObserver(()=>map.autoResize());observer.observe(host.current);
+            setReady(true);
+        }).catch(e=>{if(!cancelled)setError(e.message);});
+        return()=>{
+            cancelled=true;observer?.disconnect();window.removeEventListener('kodaero:naver-map-error',authError);
+            clearOverlays(markers);clearOverlays(path);clearOverlays(user);
+            nativeMap.current?.destroy();nativeMap.current=null;mapRef.current=null;
+        };
+    },[mapRef]);
+    useEffect(()=>{
+        if(!ready||!nativeMap.current)return;
+        const maps=window.naver.maps,map=nativeMap.current;
+        clearOverlays(markers);
+        pubs.filter(hasCoordinate).forEach(pub=>{
+            const active=pub.id===selected?.id;
+            const marker=new maps.Marker({map,position:new maps.LatLng(pub.latitude,pub.longitude),
+                icon:{content:markerContent(pub,active,onSelect),size:new maps.Size(42,48),anchor:new maps.Point(21,48)},
+                zIndex:active?1000:100,opacity:route?.path?(active?1:.4):1,title:pub.name,
+            });
+            markers.current.push(marker);
+        });
+    },[ready,pubs,selected?.id,onSelect,route]);
+    useEffect(()=>{
+        if(!ready||!nativeMap.current)return;
+        const maps=window.naver.maps,map=nativeMap.current;
+        clearOverlays(path);
+        const segments=routeCoordinates(route);
+        segments.forEach(points=>{
+            const coords=points.map(([lat,lng])=>new maps.LatLng(lat,lng));
+            path.current.push(new maps.Polyline({map,path:coords,strokeColor:'#ffffff',strokeWeight:9,zIndex:200}),new maps.Polyline({map,path:coords,strokeColor:'#F85C5C',strokeWeight:5,zIndex:201}));
+        });
+        if(segments.length){
+            const points=segments.flat();
+            [points[0],points.at(-1)].forEach((point,index)=>{
+                const content=document.createElement('div');content.className=`route-endpoint ${index?'arrival':'departure'}`;content.textContent=index?'도착':'출발';
+                path.current.push(new maps.Marker({map,position:new maps.LatLng(...point),icon:{content,anchor:new maps.Point(20,20)},zIndex:1100}));
+            });
+            const mobile=window.matchMedia('(max-width:760px)').matches;
+            fitNaverBounds(map,maps,points,mobile?{top:230,right:65,bottom:30,left:30,maxZoom:19}:{top:90,right:60,bottom:90,left:60,maxZoom:19});
+        }
+    },[ready,route]);
+    useEffect(()=>{
+        if(!ready||!nativeMap.current)return;clearOverlays(user);
+        if(location){
+            const maps=window.naver.maps;
+            const dot=document.createElement('div');dot.className='my-location-dot';dot.setAttribute('aria-label','내 위치');
+            user.current.push(new maps.Marker({map:nativeMap.current,position:new maps.LatLng(location.latitude,location.longitude),icon:{content:dot,size:new maps.Size(18,18),anchor:new maps.Point(9,9)},zIndex:1200}));
+        }
+    },[ready,location]);
+    return <><div className="map" ref={host} role="region" aria-label="네이버 고연전 무료주점 지도"/>{error&&<div className="map-error" role="alert"><b>네이버 지도를 표시하지 못했어요</b><p>{error}</p><button onClick={()=>window.location.reload()}>다시 시도</button></div>}</>;
 }

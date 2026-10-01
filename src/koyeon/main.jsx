@@ -14,7 +14,7 @@ export default function KoyeonMap(){
     detailAbort.current?.abort();const controller=new AbortController();detailAbort.current=controller;
     setSelected(pub);setDetailError('');setDetailLoading(true);setExpanded(false);
     const url=new URL(window.location.href);url.searchParams.set('pub',pub.id);url.hash='/';window.history.replaceState(null,'',url);
-    if(hasCoordinate(pub))mapRef.current?.flyTo([pub.latitude,pub.longitude],18,{duration:.65});
+    if(hasCoordinate(pub))mapRef.current?.focus([pub.latitude,pub.longitude],18,{duration:.65});
     getData(`pubs/${pub.id}`,{},controller.signal).then(detail=>setSelected(current=>current?.id===pub.id?{...pub,...detail}:current)).catch(e=>{if(e.name!=='AbortError')setDetailError('상세정보를 가져오지 못했습니다. 목록 정보를 표시합니다.');}).finally(()=>{if(!controller.signal.aborted)setDetailLoading(false);});
   },[]);
   useEffect(()=>{if(!pubs.length)return;const id=new URLSearchParams(window.location.search || window.location.hash.split('?')[1]).get('pub');const match=pubs.find(pub=>String(pub.id)===id);if(match)choose(match);},[pubs,choose]);
@@ -28,7 +28,7 @@ export default function KoyeonMap(){
     getData('routes',{startLat:start.latitude,startLong:start.longitude,endLat:end.latitude,endLong:end.longitude},controller.signal).then(data=>{const found=data?.find(item=>routeCoordinates(item).length);if(!found)throw new Error('이 구간의 도보 경로를 찾지 못했습니다.');setRoute(found);}).catch(e=>{if(e.name!=='AbortError')setRouteError(e.message);}).finally(()=>{if(!controller.signal.aborted)setRouting(false);});
     return()=>controller.abort();
   },[start,end]);
-  const locate=()=>{if(!navigator.geolocation){announce('이 브라우저에서는 내 위치를 사용할 수 없습니다.');return;}setLocating(true);navigator.geolocation.getCurrentPosition(position=>{const current={id:'my-location',name:'내 위치',latitude:position.coords.latitude,longitude:position.coords.longitude};setLocation(current);mapRef.current?.flyTo([current.latitude,current.longitude],17);setLocating(false);},e=>{setLocating(false);announce(e.code===1?'위치 권한을 허용하면 내 위치를 확인할 수 있어요.':'내 위치를 찾지 못했습니다. 다시 시도해주세요.');},{enableHighAccuracy:true,timeout:10000,maximumAge:60000});};
+  const locate=()=>{if(!navigator.geolocation){announce('이 브라우저에서는 내 위치를 사용할 수 없습니다.');return;}setLocating(true);navigator.geolocation.getCurrentPosition(position=>{const current={id:'my-location',name:'내 위치',latitude:position.coords.latitude,longitude:position.coords.longitude};setLocation(current);mapRef.current?.focus([current.latitude,current.longitude],17);setLocating(false);},e=>{setLocating(false);announce(e.code===1?'위치 권한을 허용하면 내 위치를 확인할 수 있어요.':'내 위치를 찾지 못했습니다. 다시 시도해주세요.');},{enableHighAccuracy:true,timeout:10000,maximumAge:60000});};
   const share=async()=>{try{await navigator.clipboard.writeText(window.location.href);setCopied(true);announce('주점 링크를 복사했어요.');setTimeout(()=>setCopied(false),2000);}catch{announce('주소창의 링크를 복사해서 공유해주세요.');}};
   const filtered=filterPubs(pubs,query,sponsor),sponsors=[...new Set(pubs.map(pub=>pub.sponsor).filter(Boolean))];
   const setEndpoint=(kind)=>{if(!hasCoordinate(selected)){announce('위치 정보가 없는 주점입니다.');return;}(kind==='start'?setStart:setEnd)(selected);announce(kind==='start'?'출발지를 설정했어요. 도착할 주점을 선택해주세요.':'도착지를 설정했어요. 출발할 주점을 선택해주세요.');};

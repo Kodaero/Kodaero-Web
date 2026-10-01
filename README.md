@@ -15,7 +15,7 @@ Node 22 이상에서 `npm ci`, `npm run dev -- --host 0.0.0.0 --port 8100 --stri
 
 운영시간의 원본 날짜를 그대로 표시하며 영업 중 여부를 추정하지 않습니다. 내 위치는 버튼 클릭 시에만 요청하고 저장하지 않습니다. 내 위치를 출발지로 선택하면 도보 경로 계산에만 좌표를 전달합니다. 프록시는 임의 URL·인증 API·쓰기 요청을 허용하지 않고 경로 응답을 캐시하지 않습니다.
 
-웹 지도는 Leaflet/OpenStreetMap이며 출처 표기를 유지합니다. 네이버 지도의 네이티브 SDK 및 기존 웹 키는 별도의 유효한 웹 SDK·도메인 설정이 필요합니다.
+지도는 기존 Kodaero-Web과 동일한 NAVER Maps JavaScript API v3를 사용합니다. 기본 웹 Client ID와 인증 파라미터도 기존 구현을 유지합니다. 키가 변경되면 `VITE_NAVER_MAP_CLIENT_ID`를 지정하고 신규 Maps 애플리케이션은 `VITE_NAVER_MAP_KEY_PARAM=ncpKeyId`를 지정합니다. 네이버 클라우드의 Web Dynamic Map 서비스와 `https://kodaero.co.kr` 도메인 등록을 확인해야 합니다. 인증 실패 시 오류를 표시하며 다른 지도 서비스로 대체하지 않습니다.
 
 ## 배포
 
