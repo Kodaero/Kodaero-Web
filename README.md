@@ -19,6 +19,8 @@ Node 22 이상에서 `npm ci`, `npm run dev -- --host 0.0.0.0 --port 8100 --stri
 
 ## 배포
 
-Vercel 프로젝트 `kodaero-web`에 이 저장소 루트를 연결합니다. `vercel link --project kodaero-web --yes`, `vercel --prod --yes`로 배포합니다. 시크릿 환경변수는 필요하지 않습니다. GitHub 연결 후 `main` 푸시를 배포 대상으로 사용합니다.
+지도 주소는 https://kodaero.co.kr/koyeon/ 입니다. 기존 `kodaero-landing` Vercel 프로젝트에서 랜딩과 지도를 함께 제공합니다. 이 저장소용 별도 Vercel 프로젝트는 사용하지 않습니다.
 
-기존 EC2 워크플로는 정적 파일만 복사하는 방식이라 새 API 프록시를 제공하지 못합니다. 자동 실행을 수동 실행으로 변경해 보존했습니다. 옛 `kodaero.site` API 도메인은 현재 사용하지 않습니다.
+이 저장소에서 지도 코드를 수정하고 커밋한 뒤, Kodaero_Landing 저장소에서 `npm run koyeon:sync`를 실행해 `/koyeon/` 기준으로 빌드합니다. 랜딩의 `public/koyeon`에 지도 산출물을 포함하고 API 프록시도 함께 갱신합니다. 배포 서버에는 지도 의존성이나 별도 GitHub 연결이 필요하지 않습니다.
+
+기존 EC2 워크플로는 참고용 수동 실행으로 보존했습니다. 기존 API 도메인 `be.kodaero.site`는 사용하지 않습니다.
