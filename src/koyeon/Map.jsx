@@ -72,7 +72,7 @@ export default function Map({pubs,selected,onSelect,mapRef,route,location}) {
                 const content=document.createElement('div');content.className=`route-endpoint ${index?'arrival':'departure'}`;content.textContent=index?'도착':'출발';
                 path.current.push(new maps.Marker({map,position:new maps.LatLng(...point),icon:{content,anchor:new maps.Point(20,20)},zIndex:1100}));
             });
-            const mobile=window.matchMedia('(max-width:760px)').matches;
+            const mobile=true;
             fitNaverBounds(map,maps,points,mobile?{top:230,right:65,bottom:30,left:30,maxZoom:19}:{top:90,right:60,bottom:90,left:60,maxZoom:19});
         }
     },[ready,route]);
