@@ -30,3 +30,5 @@
 .panel.expanded .detail-image{height:250px}.detail-top{height:36px}.route-panel{top:132px;max-height:calc(61% - 148px)}
 .toast{bottom:calc(39% + 15px)}.map-error{top:138px;left:20px;right:20px;font-size:12px;padding:14px}
 @media(max-width:430px){.app{box-shadow:none}}
+
+.map{position:absolute!important;width:100%;height:61%}

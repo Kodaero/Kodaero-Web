@@ -1,7 +1,7 @@
 import React,{useState,useEffect,useRef,useCallback} from 'react';
 import {Search,X,ArrowLeft,ArrowUpRight,MapPin,Clock,Navigation,LocateFixed,Plus,Minus,SlidersHorizontal,ChevronDown,Footprints,ArrowDownUp,Share2,Check,RefreshCw} from 'lucide-react';
 import Map from './Map.jsx';
-import {getData,filterPubs,hasCoordinate,menusOf,formatTime,routeCoordinates} from './data.js';
+import {getData,filterPubs,hasCoordinate,formatTime,routeCoordinates} from './data.js';
 import './style.css';
 const Tiger=()=> <img className="tiger" src={`${import.meta.env.BASE_URL}assets/icon-tiger-red.svg`} alt=""/>;
 export default function KoyeonMap(){
@@ -43,12 +43,12 @@ export default function KoyeonMap(){
         {selected?<>
           <div className="detail-top"><button className="icon-button" onClick={close} aria-label="주점 목록으로"><ArrowLeft size={22}/></button><span>무료주점 정보</span><button className="icon-button" onClick={share} aria-label="주점 링크 복사">{copied?<Check size={20}/>:<Share2 size={20}/>}</button></div>
           <div className="detail-scroll">
-            <img className="detail-image" src={`${import.meta.env.BASE_URL}assets/free-bar-main-image.png`} alt="고대로 무료주점 안내"/>
+            
             <div className="detail-body"><div className="sponsor"><Tiger/>{selected.sponsor||'고연전 무료주점'}</div><h1>{selected.name}</h1><p className="address"><MapPin size={15}/>{selected.address||'주소 정보 미등록'}</p><p className="time"><Clock size={15}/>{formatTime(selected.operatingTime)}</p>
               {detailError&&<p className="inline-error" role="status">{detailError}</p>}
               <div className="directions"><button className="secondary" disabled={!hasCoordinate(selected)} onClick={()=>setEndpoint('start')}>출발</button><button className="primary" disabled={!hasCoordinate(selected)} onClick={()=>setEndpoint('end')}>도착</button></div>
             </div>
-            <section className="menus"><h2>무료주점 메뉴</h2>{detailLoading?<p className="muted" role="status">메뉴를 확인하고 있어요…</p>:menusOf(selected).length?menusOf(selected).map((menu,index)=><div className="menu" key={`${menu}-${index}`}><img src={`${import.meta.env.BASE_URL}assets/menu-utensil-icon.svg`} alt=""/><span>{menu}</span><b>무료</b></div>):<p className="muted">등록된 메뉴 정보가 없어요.</p>}<p className="detail-note">운영시간과 제공 메뉴는 현장 상황에 따라 달라질 수 있어요.</p></section>
+
           </div>
         </>:<>
 
