@@ -1,23 +1,14 @@
-import React from 'react';
-import { HashRouter as Router, Route, Routes } from 'react-router-dom';
-import MapComponent from './MapComponent.jsx';
-import MenuScreen from './MenuScreen.jsx';
-import SearchScreen from './SearchScreen.jsx';
-import styles from './App.module.css';
-
-function App() {
-
-    return (
-        <Router>
-            <div className={styles.App}>
-                <Routes>
-                    <Route path="/" element={<MapComponent />} />
-                    <Route path="/menu/:id" element={<MenuScreen />} />
-                    <Route path="/search" element={<SearchScreen />} /> {/* 검색 화면 경로 추가 */}
-                </Routes>
-            </div>
-        </Router>
-    );
+import { HashRouter, Navigate, Route, Routes, useParams } from 'react-router-dom';
+import KoyeonMap from './koyeon/main.jsx';
+function LegacyPub() {
+    const { id } = useParams();
+    return <Navigate to={`/?pub=${encodeURIComponent(id)}`} replace />;
 }
-
-export default App;
+export default function App() {
+    return <HashRouter><Routes>
+        <Route path="/" element={<KoyeonMap />} />
+        <Route path="/menu/:id" element={<LegacyPub />} />
+        <Route path="/search" element={<KoyeonMap />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes></HashRouter>;
+}
