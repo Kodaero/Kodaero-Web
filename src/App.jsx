@@ -5,11 +5,6 @@ function LegacyPub() {
     return <Navigate to={`/?pub=${encodeURIComponent(id)}`} replace />;
 }
 export default function App() {
-    // While disabled, use the existing landing page without a separate notice.
-    if (import.meta.env.VITE_KOYEON_ENABLED !== 'true') {
-        window.location.replace('/');
-        return null;
-    }
     return <HashRouter><Routes>
         <Route path="/" element={<KoyeonMap />} />
         <Route path="/menu/:id" element={<LegacyPub />} />
